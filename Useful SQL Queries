@@ -1,0 +1,260 @@
+Date Functions:
+------------------------------------
+  /*ADDDATE:*/   SELECT ADDDATE("2017-06-15", INTERVAL 10 DAY);
+  /*ADDTIME:*/   SELECT ADDTIME("2017-06-15 09:34:21.000001", "5.000003");
+  /*CURDATE:*/   SELECT CURDATE(); SELECT CURRENT_DATE();
+  /*CURRENT_TIME:*/   SELECT CURRENT_TIME(); SELECT CURRENT_TIMESTAMP(); SELECT CURTIME();
+  /*DATE:*/   SELECT DATE("2017-06-15");
+  /*DATEDIFF:*/   SELECT DATEDIFF("2017-06-25", "2017-06-15");
+  /*DATE_ADD:*/   SELECT DATE_ADD("2017-06-15", INTERVAL 10 DAY);
+  /*DATE_SUB:*/   SELECT DATE_SUB("2017-06-15", INTERVAL 10 DAY);
+  /*DATE_FORMAT:*/   SELECT DATE_FORMAT("2017-06-15", "%D");  SELECT DATE_FORMAT("2017-06-15", "%M");  SELECT DATE_FORMAT("2017-06-15", "%Y");  
+  /*DAY:*/   SELECT DAY("2017-06-15");
+
+SELECT DAYNAME("2017-06-15"); 
+SELECT DAYOFMONTH("2017-06-15"); 
+SELECT DAYOFWEEK("2017-06-15"); 
+SELECT EXTRACT(MONTH FROM "2017-06-15"); 
+SELECT FROM_DAYS(685467); 
+SELECT HOUR("2017-06-20 09:34:00"); 
+SELECT LAST_DAY("2017-06-20"); 
+SELECT MONTH("2017-06-15"); 
+SELECT MINUTE("2017-06-20 09:34:00"); 
+SELECT PERIOD_ADD(201703, 5); 
+SELECT PERIOD_DIFF(201710, 201703); 
+SELECT QUARTER("2017-06-15"); 
+SELECT SECOND("2017-06-20 09:34:00.000023"); 
+SELECT SEC_TO_TIME(1); 
+SELECT STR_TO_DATE("August 10 2017", "%M %d %Y"); 
+SELECT SUBDATE("2017-06-15", INTERVAL 10 DAY); 
+SELECT SUBTIME("2017-06-15 10:24:21.000004", "5.000001"); 
+SELECT TIME("19:30:10"); 
+SELECT TIME_FORMAT("19:30:10", "%H %i %s"); 
+SELECT TIMEDIFF("13:10:11", "13:10:10"); 
+SELECT TIMESTAMP("2017-07-23",  "13:10:11"); 
+SELECT TO_DAYS("2017-06-20"); 
+SELECT WEEK("2017-06-15"); 
+SELECT WEEKDAY("2017-06-15"); 
+SELECT WEEKOFYEAR("2017-06-15"); 
+SELECT YEAR("2017-06-15"); 
+SELECT YEARWEEK("2017-06-15"); 
+
+
+Left join of 2 tables:
+--------------------------------
+SELECT 
+ProductID, 
+Purchasing.Vendor.BusinessEntityID, 
+Name
+
+FROM Purchasing.ProductVendor 
+INNER JOIN Purchasing.Vendor
+    ON (Purchasing.ProductVendor.BusinessEntityID = Purchasing.Vendor.BusinessEntityID)
+
+WHERE StandardPrice > $10
+  AND Name LIKE N'F%';
+
+
+
+DECLARE Function and addding Varchar
+-------------------------------------------
+DECLARE @myVariable AS VARCHAR(40);
+SET @myVariable = 'This string is longer than thirty characters';
+
+SELECT CAST(@myVariable AS VARCHAR);
+SELECT DATALENGTH(CAST(@myVariable AS VARCHAR)) AS 'VarcharDefaultLength';
+SELECT CONVERT(CHAR, @myVariable);
+SELECT DATALENGTH(CONVERT(CHAR, @myVariable)) AS 'VarcharDefaultLength';
+
+
+SELECT BusinessEntityID,
+    SalesYTD,
+    CONVERT(VARCHAR(12), SalesYTD, 1) AS MoneyDisplayStyle1,
+    GETDATE() AS CurrentDate,
+    CONVERT(VARCHAR(12), GETDATE(), 3) AS DateDisplayStyle3
+
+FROM Sales.SalesPerson
+WHERE CAST(SalesYTD AS VARCHAR(20)) LIKE '1%';
+
+
+How to create a blank table in SQL:
+---------------------------------------
+CREATE TABLE cars 
+(CarNumber int primary key, 
+color varchar (10) not null, 
+datepurchase date null)
+
+INSERT [dbo].[cars] Values 
+  (4, 'Blue','2024-01-01'),
+ (5, 'Red','2024-03-01')
+
+CREATE TABLE Sales ( Country VARCHAR(50), Region VARCHAR(50), Sales INT );
+INSERT INTO sales VALUES (N'Canada', N'Alberta', 100);
+INSERT INTO sales VALUES (N'Canada', N'British Columbia', 200);
+INSERT INTO sales VALUES (N'Canada', N'British Columbia', 300);
+INSERT INTO sales VALUES (N'United States', N'Montana', 100);
+
+Adding a sub query:
+-------------------------------------
+SELECT 
+RTRIM(p.FirstName) + ' ' + LTRIM(p.LastName) AS Name,
+d.City
+FROM Person.Person AS p
+
+INNER JOIN HumanResources.Employee e
+    ON p.BusinessEntityID = e.BusinessEntityID
+
+INNER JOIN (
+            SELECT bea.BusinessEntityID,
+            a.City
+            FROM Person.Address AS a
+            INNER JOIN Person.BusinessEntityAddress AS bea
+            ON a.AddressID = bea.AddressID
+          ) AS d
+    ON p.BusinessEntityID = d.BusinessEntityID
+
+ORDER BY p.LastName,
+    p.FirstName;
+
+AUTOMATE using DECLARE:
+----------------------------------
+DECLARE @AsOfFrom DATETIME2 = DATEADD(month, -12, SYSUTCDATETIME());
+DECLARE @AsOfTo DATETIME2 = DATEADD(month, -6, SYSUTCDATETIME());
+
+SELECT DepartmentNumber,
+    DepartmentName,
+    ManagerID,
+    ParentDepartmentNumber
+
+FROM DEPARTMENT
+FOR SYSTEM_TIME FROM @AsOfFrom TO @AsOfTo
+WHERE ManagerID = 5;
+
+CASE WHEN Function:
+---------------------------------------
+SELECT ProductNumber,
+    Name,
+    "Price Range" = CASE
+        WHEN ListPrice = 0 THEN 'Mfg item - not for resale'
+        WHEN ListPrice < 50 THEN 'Under $50'
+        WHEN ListPrice >= 50 AND ListPrice < 250 THEN 'Under $250'
+        WHEN ListPrice >= 250 AND ListPrice < 1000 THEN 'Under $1000'
+        ELSE 'Over $1000'
+        END
+FROM Production.Product
+ORDER BY ProductNumber;
+
+Update data using case when:
+----------------------------
+UPDATE HumanResources.Employee
+SET VacationHours = (
+        CASE
+            WHEN ((VacationHours - 10.00) < 0) THEN VacationHours + 40
+            ELSE (VacationHours + 20.00)
+            END
+        )
+OUTPUT Deleted.BusinessEntityID,
+    Deleted.VacationHours AS BeforeValue,
+    Inserted.VacationHours AS AfterValue
+WHERE SalariedFlag = 0;
+
+
+USING CAST FUNTION:
+-----------------------------
+SELECT CAST(ROUND(SalesYTD / CommissionPCT, 0) AS INT) AS Computed
+FROM Sales.SalesPerson
+WHERE CommissionPCT != 0;
+
+SELECT 'The list price is ' + CAST(ListPrice AS VARCHAR(12)) AS ListPrice
+FROM dbo.DimProduct
+WHERE ListPrice BETWEEN 350.00 AND 400.00;
+
+
+
+Use CASE in a SET statement
+--------------------------------------
+USE AdventureWorks2022;
+GO
+
+CREATE FUNCTION dbo.GetContactInformation (@BusinessEntityID INT)
+RETURNS @retContactInformation TABLE (
+    BusinessEntityID INT NOT NULL,
+    FirstName NVARCHAR(50) NULL,
+    LastName NVARCHAR(50) NULL,
+    ContactType NVARCHAR(50) NULL,
+    PRIMARY KEY CLUSTERED (BusinessEntityID ASC)
+    )
+AS
+-- Returns the first name, last name and contact type for the specified contact.
+BEGIN
+    DECLARE @FirstName NVARCHAR(50),
+        @LastName NVARCHAR(50),
+        @ContactType NVARCHAR(50);
+
+    -- Get common contact information
+    SELECT @BusinessEntityID = BusinessEntityID,
+        @FirstName = FirstName,
+        @LastName = LastName
+    FROM Person.Person
+    WHERE BusinessEntityID = @BusinessEntityID;
+
+    SET @ContactType = CASE
+            -- Check for employee
+            WHEN EXISTS (
+                    SELECT *
+                    FROM HumanResources.Employee AS e
+                    WHERE e.BusinessEntityID = @BusinessEntityID
+                    )
+                THEN 'Employee'
+                    -- Check for vendor
+            WHEN EXISTS (
+                    SELECT *
+                    FROM Person.BusinessEntityContact AS bec
+                    WHERE bec.BusinessEntityID = @BusinessEntityID
+                    )
+                THEN 'Vendor'
+                    -- Check for store
+            WHEN EXISTS (
+                    SELECT *
+                    FROM Purchasing.Vendor AS v
+                    WHERE v.BusinessEntityID = @BusinessEntityID
+                    )
+                THEN 'Store Contact'
+                    -- Check for individual consumer
+            WHEN EXISTS (
+                    SELECT *
+                    FROM Sales.Customer AS c
+                    WHERE c.PersonID = @BusinessEntityID
+                    )
+                THEN 'Consumer'
+            END;
+
+    -- Return the information to the caller
+    IF @BusinessEntityID IS NOT NULL
+    BEGIN
+        INSERT @retContactInformation
+        SELECT @BusinessEntityID,
+            @FirstName,
+            @LastName,
+            @ContactType;
+    END;
+
+    RETURN;
+END;
+GO
+
+SELECT BusinessEntityID,
+    FirstName,
+    LastName,
+    ContactType
+FROM dbo.GetContactInformation(2200);
+GO
+
+SELECT BusinessEntityID,
+    FirstName,
+    LastName,
+    ContactType
+FROM dbo.GetContactInformation(5);
+GO
+
+  
